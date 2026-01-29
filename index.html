@@ -16,38 +16,53 @@
         /* ゲーム本体エリア */
         #game-outer { position: absolute; top: 100px; bottom: 100px; left: 0; right: 0; background: #37474f; overflow: hidden; display: flex; flex-direction: column; }
         
-        #header-ui { width: 100%; display: flex; justify-content: space-around; padding: 10px 0; z-index: 10; color: white; }
+        #header-ui { width: 100%; display: flex; justify-content: space-around; padding: 10px 0; z-index: 10; color: white; flex-shrink: 0; }
         .ui-box { padding: 4px 12px; border-radius: 8px; font-weight: bold; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); }
 
         /* スタックエリア */
-        #stack-container { flex-grow: 1; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 20px; gap: 10px; }
-        .lane { width: 60px; height: 80%; background: rgba(0,0,0,0.2); border-radius: 8px; display: flex; flex-direction: column-reverse; align-items: center; padding: 5px; gap: 5px; position: relative; }
-        .lane:active { background: rgba(255,255,255,0.1); }
+        #stack-container { flex-grow: 1; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 20px; gap: 8px; }
+        .lane { width: 60px; height: 90%; background: rgba(0,0,0,0.2); border-radius: 8px; display: flex; flex-direction: column-reverse; align-items: center; padding: 5px; gap: 5px; position: relative; }
         
         .block { width: 50px; height: 50px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: white; animation: drop 0.2s ease-out; }
         @keyframes drop { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* 次の数字 */
-        #next-box { text-align: center; margin-bottom: 10px; }
-        #next-val { font-size: 40px; font-weight: bold; color: #ffeb3b; text-shadow: 0 0 10px rgba(255,235,59,0.5); }
+        #next-box { text-align: center; }
+        #next-val { font-size: 32px; font-weight: bold; color: #ffeb3b; }
 
-        /* メニュー画面 */
+        /* メニュー画面（スクロール対応・レイアウト修正） */
         #menuScreen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.9); display: flex; flex-direction: column; 
             align-items: center; justify-content: flex-start; z-index: 50; 
-            padding: 20px 0; overflow-y: auto; color: white;
+            padding: 10px 0; overflow-y: auto; color: white; -webkit-overflow-scrolling: touch;
         }
-        #ad-middle-container { width: 300px; height: 120px; background: #000; margin: 15px 0; display: none; justify-content: center; align-items: center; }
-        .menu-btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 12px; padding-bottom: 30px; }
-        .menu-btn { width: 220px; padding: 15px; font-size: 18px; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
-        #retry-btn { background: #ffeb3b; color: #000; }
-        #more-games-btn { background: #ff4081; color: white; }
+        
+        /* 1行に収めるための調整 */
+        #result-msg { color: #ffeb3b; margin: 10px 0; font-size: 28px; text-align: center; line-height: 1.2; }
+        .guide-text { padding: 0 20px; text-align: center; font-size: 14px; margin-bottom: 10px; flex-shrink: 0; }
+
+        #ad-middle-container { width: 300px; height: 120px; background: #000; margin: 10px 0; display: none; justify-content: center; align-items: center; flex-shrink: 0; }
+
+        .menu-btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 10px; padding-bottom: 40px; flex-shrink: 0; }
+        .menu-btn { 
+            width: 260px; /* 少し幅を広げて1行に収まりやすく */
+            padding: 14px; 
+            font-size: 16px; 
+            border: none; 
+            border-radius: 30px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            text-decoration: none; 
+            text-align: center; 
+            white-space: nowrap; /* 改行禁止 */
+        }
+        #retry-btn { background: #ffeb3b; color: #000; box-shadow: 0 4px #c6b921; }
+        #more-games-btn { background: #ff4081; color: white; box-shadow: 0 4px #c2185b; }
     </style>
 </head>
 <body>
 
-    <div id="ad-top"><iframe src="ad.html"></iframe></div>
+    <div id="ad-top"><iframe id="frame-top" src="ad.html"></iframe></div>
 
     <div id="game-outer">
         <div id="header-ui">
@@ -63,8 +78,8 @@
         </div>
 
         <div id="menuScreen">
-            <h2 id="result-msg" style="color:#ffeb3b; margin: 20px 0; font-size: 32px;">10-Stack</h2>
-            <p style="padding: 0 30px; text-align: center;">レーンをタップして数字を置こう。<br>縦の合計が<b>「ぴったり10」</b>になると消えるぞ！10を超えるとゲームオーバー！</p>
+            <h2 id="result-msg">10-Stack</h2>
+            <p class="guide-text">レーンをタップして数字を配置！<br>縦の合計を<b>「ぴったり10」</b>にして消そう。<br>10を超えると終了！</p>
             
             <div id="ad-middle-container">
                 <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
@@ -77,7 +92,7 @@
         </div>
     </div>
 
-    <div id="ad-bottom"><iframe src="ad.html"></iframe></div>
+    <div id="ad-bottom"><iframe id="frame-bottom" src="ad.html"></iframe></div>
 
     <script>
         let score = 0, gameActive = false;
@@ -85,9 +100,14 @@
         let lanes = [[], [], [], []];
         const colors = ["", "#81d4fa", "#4fc3f7", "#29b6f6", "#03a9f4", "#039be5", "#0288d1", "#0277bd", "#01579b", "#b71c1c"];
 
+        const menuScreen = document.getElementById("menuScreen");
+        const adMid = document.getElementById("ad-middle-container");
+        const resultMsg = document.getElementById("result-msg");
+        const retryBtn = document.getElementById("retry-btn");
+
         function startNewGame() {
-            document.getElementById("menuScreen").style.display = "none";
-            document.getElementById("ad-middle-container").style.display = "none";
+            menuScreen.style.display = "none";
+            adMid.style.display = "none";
             score = 0;
             lanes = [[], [], [], []];
             gameActive = true;
@@ -116,7 +136,6 @@
                 return;
             }
 
-            // ブロック追加
             laneData.push(nextValue);
             const block = document.createElement("div");
             block.className = "block";
@@ -124,8 +143,7 @@
             block.style.backgroundColor = colors[nextValue];
             document.getElementById(`lane-${laneIdx}`).appendChild(block);
 
-            // 合計判定
-            if(currentTotal + nextValue === 10) {
+            if(laneData.reduce((a, b) => a + b, 0) === 10) {
                 setTimeout(() => {
                     score += 10;
                     lanes[laneIdx] = [];
@@ -133,7 +151,6 @@
                     updateUI();
                 }, 200);
             }
-
             generateNext();
         }
 
@@ -143,17 +160,22 @@
 
         function gameOver(msg) {
             gameActive = false;
-            document.getElementById("result-msg").innerText = msg + "\nSCORE: " + score;
-            document.getElementById("ad-middle-container").style.display = "flex";
-            document.getElementById("menuScreen").style.display = "flex";
+            resultMsg.innerText = msg + "\nSCORE: " + score;
+            retryBtn.innerText = "★ もう一度遊ぶ ★";
+            adMid.style.display = "flex";
+            menuScreen.style.display = "flex";
+            menuScreen.scrollTop = 0; // 上部にスクロールを戻す
         }
 
-        setInterval(() => {
-            const iframes = document.querySelectorAll('iframe');
-            iframes.forEach(f => f.src = f.src);
-        }, 30000);
+        function refreshAds() {
+            const t = document.getElementById('frame-top');
+            const b = document.getElementById('frame-bottom');
+            if(t) t.src = t.src;
+            if(b) b.src = b.src;
+        }
+        setInterval(refreshAds, 30000);
 
-        window.onload = () => { document.getElementById("menuScreen").style.display = "flex"; };
+        window.onload = () => { menuScreen.style.display = "flex"; };
     </script>
 </body>
 </html>
