@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>10-Stack - 第39弾</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; overflow: hidden; background: #263238; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
+        
+        /* 広告枠：100px */
+        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 100px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        #ad-top { top: 0; } #ad-bottom { bottom: 0; }
+        iframe { border: none; width: 100%; height: 100px; }
+
+        /* ゲーム本体エリア */
+        #game-outer { position: absolute; top: 100px; bottom: 100px; left: 0; right: 0; background: #37474f; overflow: hidden; display: flex; flex-direction: column; }
+        
+        #header-ui { width: 100%; display: flex; justify-content: space-around; padding: 10px 0; z-index: 10; color: white; }
+        .ui-box { padding: 4px 12px; border-radius: 8px; font-weight: bold; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); }
+
+        /* スタックエリア */
+        #stack-container { flex-grow: 1; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 20px; gap: 10px; }
+        .lane { width: 60px; height: 80%; background: rgba(0,0,0,0.2); border-radius: 8px; display: flex; flex-direction: column-reverse; align-items: center; padding: 5px; gap: 5px; position: relative; }
+        .lane:active { background: rgba(255,255,255,0.1); }
+        
+        .block { width: 50px; height: 50px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: white; animation: drop 0.2s ease-out; }
+        @keyframes drop { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* 次の数字 */
+        #next-box { text-align: center; margin-bottom: 10px; }
+        #next-val { font-size: 40px; font-weight: bold; color: #ffeb3b; text-shadow: 0 0 10px rgba(255,235,59,0.5); }
+
+        /* メニュー画面 */
+        #menuScreen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); display: flex; flex-direction: column; 
+            align-items: center; justify-content: flex-start; z-index: 50; 
+            padding: 20px 0; overflow-y: auto; color: white;
+        }
+        #ad-middle-container { width: 300px; height: 120px; background: #000; margin: 15px 0; display: none; justify-content: center; align-items: center; }
+        .menu-btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 12px; padding-bottom: 30px; }
+        .menu-btn { width: 220px; padding: 15px; font-size: 18px; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
+        #retry-btn { background: #ffeb3b; color: #000; }
+        #more-games-btn { background: #ff4081; color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="ad-top"><iframe src="ad.html"></iframe></div>
+
+    <div id="game-outer">
+        <div id="header-ui">
+            <div id="score-display" class="ui-box">SCORE: 0</div>
+            <div id="next-box">NEXT: <span id="next-val">?</span></div>
+        </div>
+        
+        <div id="stack-container">
+            <div class="lane" onclick="dropInLane(0)" id="lane-0"></div>
+            <div class="lane" onclick="dropInLane(1)" id="lane-1"></div>
+            <div class="lane" onclick="dropInLane(2)" id="lane-2"></div>
+            <div class="lane" onclick="dropInLane(3)" id="lane-3"></div>
+        </div>
+
+        <div id="menuScreen">
+            <h2 id="result-msg" style="color:#ffeb3b; margin: 20px 0; font-size: 32px;">10-Stack</h2>
+            <p style="padding: 0 30px; text-align: center;">レーンをタップして数字を置こう。<br>縦の合計が<b>「ぴったり10」</b>になると消えるぞ！10を超えるとゲームオーバー！</p>
+            
+            <div id="ad-middle-container">
+                <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
+            </div>
+
+            <div class="menu-btn-group">
+                <button id="retry-btn" class="menu-btn" onclick="startNewGame()">★ スタート ★</button>
+                <a href="https://saaaachi.github.io/Color.Match/" id="more-games-btn" class="menu-btn">★ 他のゲームはこちら ★</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="ad-bottom"><iframe src="ad.html"></iframe></div>
+
+    <script>
+        let score = 0, gameActive = false;
+        let nextValue = 0;
+        let lanes = [[], [], [], []];
+        const colors = ["", "#81d4fa", "#4fc3f7", "#29b6f6", "#03a9f4", "#039be5", "#0288d1", "#0277bd", "#01579b", "#b71c1c"];
+
+        function startNewGame() {
+            document.getElementById("menuScreen").style.display = "none";
+            document.getElementById("ad-middle-container").style.display = "none";
+            score = 0;
+            lanes = [[], [], [], []];
+            gameActive = true;
+            updateUI();
+            clearLanes();
+            generateNext();
+        }
+
+        function clearLanes() {
+            for(let i=0; i<4; i++) document.getElementById(`lane-${i}`).innerHTML = "";
+        }
+
+        function generateNext() {
+            nextValue = Math.floor(Math.random() * 9) + 1;
+            document.getElementById("next-val").innerText = nextValue;
+        }
+
+        function dropInLane(laneIdx) {
+            if(!gameActive) return;
+
+            const laneData = lanes[laneIdx];
+            const currentTotal = laneData.reduce((a, b) => a + b, 0);
+
+            if(currentTotal + nextValue > 10) {
+                gameOver("10を超えちゃった！😱");
+                return;
+            }
+
+            // ブロック追加
+            laneData.push(nextValue);
+            const block = document.createElement("div");
+            block.className = "block";
+            block.innerText = nextValue;
+            block.style.backgroundColor = colors[nextValue];
+            document.getElementById(`lane-${laneIdx}`).appendChild(block);
+
+            // 合計判定
+            if(currentTotal + nextValue === 10) {
+                setTimeout(() => {
+                    score += 10;
+                    lanes[laneIdx] = [];
+                    document.getElementById(`lane-${laneIdx}`).innerHTML = "";
+                    updateUI();
+                }, 200);
+            }
+
+            generateNext();
+        }
+
+        function updateUI() {
+            document.getElementById("score-display").innerText = "SCORE: " + score;
+        }
+
+        function gameOver(msg) {
+            gameActive = false;
+            document.getElementById("result-msg").innerText = msg + "\nSCORE: " + score;
+            document.getElementById("ad-middle-container").style.display = "flex";
+            document.getElementById("menuScreen").style.display = "flex";
+        }
+
+        setInterval(() => {
+            const iframes = document.querySelectorAll('iframe');
+            iframes.forEach(f => f.src = f.src);
+        }, 30000);
+
+        window.onload = () => { document.getElementById("menuScreen").style.display = "flex"; };
+    </script>
+</body>
+</html>
