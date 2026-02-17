@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>10-Stack - 第39弾</title>
+    <title>10-Stack - Ad Deluxe</title>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; overflow: hidden; background: #263238; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
@@ -24,7 +24,7 @@
         .display-slot { text-align: center; }
         .slot-label { font-size: 10px; color: #b0bec5; margin-bottom: 2px; }
         .slot-val { font-size: 28px; font-weight: bold; width: 45px; height: 45px; background: rgba(0,0,0,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #546e7a; }
-        #hold-slot { border-color: #ff4081; color: #ff4081; cursor: pointer; } /* ホールドはピンク */
+        #hold-slot { border-color: #ff4081; color: #ff4081; cursor: pointer; }
         #hold-slot:active { transform: scale(0.95); }
         #next-val { color: #ffeb3b; }
 
@@ -40,14 +40,27 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.92); display: flex; flex-direction: column; 
             align-items: center; justify-content: flex-start; z-index: 50; 
-            padding: 10px 0; overflow-y: auto; color: white; -webkit-overflow-scrolling: touch;
+            padding: 20px 0; overflow-y: auto; color: white; -webkit-overflow-scrolling: touch;
         }
+
+        /* 大広告オーバーレイ */
+        #bigAdScreen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .ad-frame-wrapper { width: 90%; height: 80%; position: relative; }
+        .ad-close-btn { 
+            position: absolute; top: -10px; right: -10px; color: white; font-size: 30px; 
+            font-weight: bold; cursor: pointer; background: rgba(0,0,0,0.5); 
+            width: 40px; height: 40px; border-radius: 50%; display: none;
+            align-items: center; justify-content: center; z-index: 2100;
+        }
+
         #result-msg { color: #ffeb3b; margin: 10px 0; font-size: 26px; text-align: center; }
-        .guide-text { padding: 0 20px; text-align: center; font-size: 13px; margin-bottom: 5px; color: #cfd8dc; }
+        .guide-text { padding: 0 20px; text-align: center; font-size: 13px; margin-bottom: 20px; color: #cfd8dc; }
 
-        #ad-middle-container { width: 300px; height: 120px; background: #000; margin: 10px 0; display: none; justify-content: center; align-items: center; }
-
-        .menu-btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 10px; padding-bottom: 40px; }
+        .menu-btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; padding-bottom: 40px; }
         .menu-btn { width: 260px; padding: 14px; font-size: 16px; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; white-space: nowrap; }
         #retry-btn { background: #ffeb3b; color: #000; box-shadow: 0 4px #c6b921; }
         #more-games-btn { background: #ff4081; color: white; box-shadow: 0 4px #c2185b; }
@@ -55,7 +68,7 @@
 </head>
 <body>
 
-    <div id="ad-top"><iframe id="frame-top" src="ad.html"></iframe></div>
+    <div id="ad-top"><iframe id="ifr-top" src="ad.html?pos=top"></iframe></div>
 
     <div id="game-outer">
         <div id="header-ui">
@@ -83,28 +96,39 @@
             <h2 id="result-msg">10-Stack</h2>
             <p class="guide-text">レーンをタップして合計を<b>「ぴったり10」</b>に！<br><b>HOLD枠</b>をタップすると今の数字をキープできるぞ。<br>10を超えると即終了！</p>
             
-            <div id="ad-middle-container">
-                <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
-            </div>
-
             <div class="menu-btn-group">
                 <button id="retry-btn" class="menu-btn" onclick="startNewGame()">★ スタート ★</button>
                 <a href="https://saaaachi.github.io/" id="more-games-btn" class="menu-btn">★ 他のゲームはこちら ★</a>
             </div>
         </div>
+
+        <div id="bigAdScreen">
+            <div class="ad-frame-wrapper">
+                <div id="ad-close-btn" class="ad-close-btn" onclick="closeAd()">×</div>
+                <iframe id="ad-large-frame" src="" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+        </div>
     </div>
 
-    <div id="ad-bottom"><iframe id="frame-bottom" src="ad.html"></iframe></div>
+    <div id="ad-bottom"><iframe id="ifr-bottom" src="ad.html?pos=bottom"></iframe></div>
 
     <script>
-        let score = 0, gameActive = false;
+        // --- 広告自動更新（30秒） ---
+        setInterval(() => {
+            const topAd = document.getElementById('ifr-top');
+            const bottomAd = document.getElementById('ifr-bottom');
+            const now = Date.now();
+            if(topAd) topAd.src = 'ad.html?pos=top&t=' + now;
+            if(bottomAd) bottomAd.src = 'ad.html?pos=bottom&t=' + now;
+        }, 30000);
+
+        let score = 0, gameActive = false, playCount = 0;
         let nextValue = 0, holdValue = null;
         let lanes = [[], [], [], []];
         const colors = ["", "#81d4fa", "#4fc3f7", "#29b6f6", "#03a9f4", "#039be5", "#0288d1", "#0277bd", "#01579b", "#b71c1c"];
 
         function startNewGame() {
             document.getElementById("menuScreen").style.display = "none";
-            document.getElementById("ad-middle-container").style.display = "none";
             score = 0; lanes = [[], [], [], []]; holdValue = null;
             gameActive = true;
             updateUI();
@@ -169,18 +193,37 @@
         }
 
         function gameOver(msg) {
+            if (!gameActive) return;
             gameActive = false;
+            playCount++;
+            
             document.getElementById("result-msg").innerText = msg + "\nSCORE: " + score;
-            document.getElementById("ad-middle-container").style.display = "flex";
+
+            // ★ゆったり設定（3回目、以降7回おき）
+            if (playCount === 3 || (playCount > 3 && (playCount - 3) % 7 === 0)) {
+                showBigAd();
+            } else {
+                document.getElementById("menuScreen").style.display = "flex";
+            }
+        }
+
+        // --- 大広告システム ---
+        function showBigAd() {
+            const screen = document.getElementById("bigAdScreen");
+            const closeBtn = document.getElementById("ad-close-btn");
+            const frame = document.getElementById("ad-large-frame");
+            frame.src = "ad.large.html?t=" + Date.now();
+            screen.style.display = "flex";
+            closeBtn.style.display = "none";
+            setTimeout(() => { closeBtn.style.display = "flex"; }, 5000);
+        }
+
+        function closeAd() {
+            document.getElementById("bigAdScreen").style.display = "none";
+            document.getElementById("ad-large-frame").src = "";
             document.getElementById("menuScreen").style.display = "flex";
             document.getElementById("menuScreen").scrollTop = 0;
         }
-
-        setInterval(() => {
-            const t = document.getElementById('frame-top');
-            const b = document.getElementById('frame-bottom');
-            if(t) t.src = t.src; if(b) b.src = b.src;
-        }, 30000);
 
         window.onload = () => { document.getElementById("menuScreen").style.display = "flex"; };
     </script>
