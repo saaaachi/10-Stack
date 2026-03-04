@@ -122,12 +122,6 @@
     <div id="ad-bottom"><iframe id="ifr-bottom" src="ad.html?pos=bottom"></iframe></div>
 
     <script>
-        // --- 広告自動更新（30秒） ---
-        setInterval(() => {
-            const now = Date.now();
-            document.getElementById('ifr-top').src = 'ad.html?pos=top&t=' + now;
-            document.getElementById('ifr-bottom').src = 'ad.html?pos=bottom&t=' + now;
-        }, 30000);
 
         let score = 0, gameActive = false, playCount = 0;
         let nextValue = 0, holdValue = null;
