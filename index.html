@@ -7,46 +7,54 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1299640300068792" crossorigin="anonymous"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; overflow: hidden; background: #263238; font-family: 'Segoe UI', sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
+        body { margin: 0; overflow: hidden; background: #263238; font-family: 'Segoe UI', sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; display: flex; flex-direction: column; }
         
-        /* 上下広告枠：視認性の高い100px */
-        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 100px; background: #1a1a1a; z-index: 100; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05); }
-        #ad-top { top: 0; } #ad-bottom { bottom: 0; }
+        /* 上部広告枠：100px固定 */
+        #ad-top { width: 100%; height: 100px; background: #1a1a1a; z-index: 100; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-bottom: 2px solid #546e7a; }
 
-        #game-outer { position: absolute; top: 100px; bottom: 100px; left: 0; right: 0; background: #37474f; overflow: hidden; display: flex; flex-direction: column; }
+        /* ゲームエリア：下端まで全開放 */
+        #game-outer { flex-grow: 1; position: relative; width: 100%; background: #37474f; overflow: hidden; display: flex; flex-direction: column; }
         
-        #header-ui { width: 100%; display: flex; justify-content: space-around; align-items: center; padding: 12px 0; z-index: 10; color: white; flex-shrink: 0; background: rgba(0,0,0,0.2); }
-        .ui-box { padding: 6px 12px; border-radius: 12px; font-weight: bold; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); font-size: 16px; color: #81d4fa; }
+        #header-ui { width: 100%; display: flex; justify-content: space-around; align-items: center; padding: 15px 0; z-index: 10; color: white; flex-shrink: 0; background: rgba(0,0,0,0.3); }
+        .ui-box { padding: 8px 15px; border-radius: 12px; font-weight: bold; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); font-size: 18px; color: #81d4fa; }
 
-        /* ホールド & ネクスト表示の強化 */
         .info-panel { display: flex; gap: 20px; align-items: center; }
         .display-slot { text-align: center; }
         .slot-label { font-size: 11px; color: #b0bec5; margin-bottom: 4px; font-weight: bold; }
         .slot-val { font-size: 32px; font-weight: bold; width: 55px; height: 55px; background: rgba(0,0,0,0.4); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 3px solid #546e7a; transition: 0.2s; }
         #hold-slot { border-color: #ff4081; color: #ff4081; cursor: pointer; box-shadow: 0 0 10px rgba(255, 64, 129, 0.3); }
-        #hold-slot:active { transform: scale(0.9); }
         #next-val { color: #ffeb3b; border-color: #fbc02d; }
 
-        /* スタックエリア：レーンの高さを調整 */
-        #stack-container { flex-grow: 1; display: flex; justify-content: center; align-items: flex-end; padding: 10px; gap: 10px; }
-        .lane { width: 75px; height: 95%; background: rgba(0,0,0,0.3); border-radius: 12px; display: flex; flex-direction: column-reverse; align-items: center; padding: 6px; gap: 6px; position: relative; border: 1px solid rgba(255,255,255,0.05); }
-        .block { width: 63px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: bold; color: white; animation: drop 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94); text-shadow: 1px 1px 2px rgba(0,0,0,0.5); box-shadow: inset 0 -4px rgba(0,0,0,0.2); }
+        #stack-container { flex-grow: 1; display: flex; justify-content: center; align-items: flex-end; padding: 15px; gap: 10px; }
+        .lane { width: 75px; height: 98%; background: rgba(0,0,0,0.3); border-radius: 12px; display: flex; flex-direction: column-reverse; align-items: center; padding: 6px; gap: 6px; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+        .block { width: 63px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: bold; color: white; animation: drop 0.2s ease-out; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); box-shadow: inset 0 -4px rgba(0,0,0,0.2); }
         
-        @keyframes drop { from { transform: translateY(-40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes drop { from { transform: translateY(-100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* メニュー/リザルト画面 */
         #menuScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 500; padding: 10px; color: white; }
         
-        /* 【収益】300x250 レクタングル */
         #mid-ad-box { width: 300px; height: 250px; background: #000; margin: 15px 0; border-radius: 8px; overflow: hidden; display: none; border: 1px solid #444; }
 
-        .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
-        .menu-btn { width: 260px; padding: 18px; font-size: 18px; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; transition: 0.2s; }
-        #retry-btn { background: #ffeb3b; color: #000; box-shadow: 0 5px #fbc02d; }
+        .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 18px; }
+        .menu-btn { 
+            width: 270px; height: 65px; /* サイズを大きく統一 */
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; border: none; border-radius: 50px; font-weight: bold; 
+            cursor: pointer; text-decoration: none; text-align: center; transition: 0.2s; 
+        }
+        
+        /* スタートボタンを目立つデザインに変更 */
+        #retry-btn { 
+            background: #ffeb3b; color: #000; 
+            box-shadow: 0 6px #fbc02d, 0 0 20px rgba(255, 235, 59, 0.4); 
+            font-size: 24px;
+        }
+        #retry-btn:active { transform: translateY(3px); box-shadow: 0 3px #fbc02d; }
         #retry-btn:disabled { background: #444; color: #777; box-shadow: none; transform: none; }
-        .link-btn { background: #ff4081; color: white; box-shadow: 0 5px #c2185b; font-size: 16px; }
+        
+        .link-btn { background: #ff4081; color: white; box-shadow: 0 6px #c2185b; font-size: 18px; }
+        .link-btn:active { transform: translateY(3px); box-shadow: 0 3px #c2185b; }
 
-        /* 全画面広告（インタースティシャル風） */
         #inter-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 99999; align-items: center; justify-content: center; }
         .inter-content { width: 320px; height: 350px; background: #fff; position: relative; border-radius: 15px; }
         #close-ad-btn { position: absolute; top: -55px; right: 0; width: 45px; height: 45px; background: #333; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 2px solid #fff; cursor: pointer; }
@@ -82,7 +90,7 @@
         </div>
 
         <div id="menuScreen">
-            <h2 id="result-msg" style="color:#ffeb3b; margin: 10px 0; font-size: 32px; text-align: center;">10-Stack</h2>
+            <h2 id="result-msg" style="color:#ffeb3b; margin: 10px 0; font-size: 36px; text-align: center;">10-Stack</h2>
             
             <div id="mid-ad-box">
                 <ins class="adsbygoogle" style="display:inline-block;width:300px;height:250px" data-ad-client="ca-pub-1299640300068792" data-ad-slot="9050127185"></ins>
@@ -90,7 +98,7 @@
             </div>
 
             <div class="btn-group">
-                <button id="retry-btn" onclick="startNewGame()">スタート！</button>
+                <button id="retry-btn" class="menu-btn" onclick="startNewGame()">スタート！</button>
                 <a href="https://saaaachi.github.io/" class="menu-btn link-btn">他のゲームで遊ぶ</a>
             </div>
         </div>
@@ -101,11 +109,6 @@
                 <iframe id="ifr-inter" src="about:blank" style="width:100%; height:100%; border:none; border-radius:15px; background:#fff;"></iframe>
             </div>
         </div>
-    </div>
-
-    <div id="ad-bottom">
-        <ins class="adsbygoogle" style="display:inline-block;width:320px;height:100px" data-ad-client="ca-pub-1299640300068792" data-ad-slot="3972022911"></ins>
-        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
 
     <script>
@@ -194,7 +197,6 @@
                 retryBtn.innerText = "もう一度遊ぶ";
             }, 1500);
 
-            // インタースティシャル広告（3回毎に表示）
             if (playCount % 3 === 0) {
                 setTimeout(showInterAd, 500);
             }
